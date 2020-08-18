@@ -1,12 +1,6 @@
 import * as Font from 'expo-font';
 import { AppLoading } from 'expo';
 
-const fetchFonts = () => {
-    return Font.loadAsync({
-    'Lato': require('../../assets/fonts/Lato.ttf')
-    });
-    };
-
 import React, {Component, useState, useEffect    } from 'react'
 import {View, Text, ImageBackground, StyleSheet, FlatList, TouchableOpacity, Platform, Alert} from 'react-native'
 
@@ -25,21 +19,21 @@ const initialState = {
     showDoneTasks: true,
     showAddTask: false,
     visibleTasks: [],
-    fontsLoaded: false,
+    loading: true,
     tasks: []
 }
 export default class TaskList extends Component{
     state = {
         ...initialState
       };
-    
-    updateFontsLoadedState = () => {
-        this.setState({ fontsLoaded: true });
-    }
 
     componentDidMount = async() => {
+        await Font.loadAsync({
+            'Lato': require('../../assets/fonts/Lato.ttf')
+            })
         const stateString = await AsyncStorage.getItem('tasksState')
         const state = JSON.parse(stateString) || initialState
+        this.setState({ loading: false })
         this.setState(state, this.filterTasks)
     }
 
@@ -94,12 +88,9 @@ export default class TaskList extends Component{
     }
 
     render() {
-        const { fontsLoaded } = this.state;
-        if(!fontsLoaded){
+        if(this.state.loading){
             return(
                 <AppLoading
-                    startAsync={fetchFonts}
-                    onFinish={this.updateFontsLoadedState}
                 />
             )
         }
