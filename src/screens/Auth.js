@@ -11,6 +11,7 @@ import {
     Alert } from 'react-native'
 
 import axios from 'axios';
+import AsyncStorage from '@react-native-community/async-storage'
 
 import backgroundImage from '../../assets/imgs/login.jpg'
 import commonStyles from '../commonStyles'
@@ -66,9 +67,10 @@ export default class Auth extends Component {
                 email: this.state.email,
                 password: this.state.password,
             })
-
+            
+            AsyncStorage.setItem('userData', JSON.stringify(res.data))
             axios.defaults.headers.common['Authorization'] = `bearer ${res.data.token}`
-            this.props.navigation.navigate('Home')
+            this.props.navigation.navigate('Home', res.data)
         }catch(e){
             showError(e)
         }
@@ -82,6 +84,19 @@ export default class Auth extends Component {
         }
 
     render(){
+
+        const validations = []
+
+        validations.push(this.state.email && this.state.email.includes('@'))
+        validations.push(this.state.password && this.state.password.length >= 6)
+
+        if(this.state.stageNew){
+            validations.push(this.state.name && this.state.name.trim().length>=3)
+            validations.push(this.state.confirmPassword === this.state.password)
+        }
+
+        const validForm = validations.reduce((t,a)=> t && a)
+
         if(this.state.loading){
             return(
                 <AppLoading
@@ -117,8 +132,9 @@ export default class Auth extends Component {
                         secureTextEntry = {true}
                         onChangeText={confirmPassword => this.setState({confirmPassword})} />
                     }
-                    <TouchableOpacity onPress={this.signinOrSignup}>
-                        <View style={styles.button}>
+                    <TouchableOpacity onPress={this.signinOrSignup} 
+                        disabled={!validForm}>
+                        <View style={[styles.button, validForm ? {} : { backgroundColor: '#AAA'}]}>
                             <Text style={styles.buttonText}>
                             {this.state.stageNew ? 'Registrar' : 'Entrar'}
                             </Text>
